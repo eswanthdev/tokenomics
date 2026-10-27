@@ -1,0 +1,377 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "currency": "USD",
+  "periods": [
+    {
+      "id": "2026-09",
+      "invoice_micros": 105000000
+    },
+    {
+      "id": "2026-10",
+      "invoice_micros": 171000000
+    }
+  ],
+  "usage": [
+    {
+      "id": "2026-09-usage-1",
+      "period": "2026-09",
+      "workflow": "support",
+      "outcome_id": "2026-09-ticket-1",
+      "model": "synthetic-bedrock-standard",
+      "tokens": 120000,
+      "shared": false,
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "billing_line_id": "2026-09-bill-bedrock",
+      "input_tokens": 96000,
+      "output_tokens": 24000,
+      "attempt": 1,
+      "invocation_status": "success",
+      "tags": {
+        "workflow": "support",
+        "team": "customer-experience"
+      },
+      "cost_micros": 12000000
+    },
+    {
+      "id": "2026-09-usage-2",
+      "period": "2026-09",
+      "workflow": "support",
+      "outcome_id": "2026-09-ticket-2",
+      "model": "synthetic-bedrock-standard",
+      "tokens": 150000,
+      "shared": false,
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "billing_line_id": "2026-09-bill-bedrock",
+      "input_tokens": 120000,
+      "output_tokens": 30000,
+      "attempt": 1,
+      "invocation_status": "success",
+      "tags": {
+        "workflow": "support",
+        "team": "customer-experience"
+      },
+      "cost_micros": 15000000
+    },
+    {
+      "id": "2026-09-usage-3",
+      "period": "2026-09",
+      "workflow": "support",
+      "outcome_id": "2026-09-ticket-3",
+      "model": "synthetic-bedrock-premium",
+      "tokens": 180000,
+      "shared": false,
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "billing_line_id": "2026-09-bill-bedrock",
+      "input_tokens": 144000,
+      "output_tokens": 36000,
+      "attempt": 1,
+      "invocation_status": "success",
+      "tags": {
+        "workflow": "support",
+        "team": "customer-experience"
+      },
+      "cost_micros": 18000000
+    },
+    {
+      "id": "2026-09-usage-4",
+      "period": "2026-09",
+      "workflow": "support",
+      "outcome_id": "2026-09-ticket-4",
+      "model": "synthetic-bedrock-premium",
+      "tokens": 250000,
+      "shared": false,
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "billing_line_id": "2026-09-bill-bedrock",
+      "input_tokens": 200000,
+      "output_tokens": 50000,
+      "attempt": 1,
+      "invocation_status": "failure",
+      "tags": {
+        "workflow": "support",
+        "team": "customer-experience"
+      },
+      "cost_micros": 25000000
+    },
+    {
+      "id": "2026-09-shared",
+      "period": "2026-09",
+      "workflow": null,
+      "outcome_id": null,
+      "model": "synthetic-bedrock-overhead",
+      "tokens": 0,
+      "shared": true,
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "billing_line_id": "2026-09-bill-bedrock",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "attempt": 1,
+      "invocation_status": "overhead",
+      "tags": {
+        "workflow": null,
+        "team": "platform"
+      },
+      "cost_micros": 30000000
+    },
+    {
+      "id": "2026-10-usage-1",
+      "period": "2026-10",
+      "workflow": "support",
+      "outcome_id": "2026-10-ticket-1",
+      "model": "synthetic-bedrock-standard",
+      "tokens": 180000,
+      "shared": false,
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "billing_line_id": "2026-10-bill-bedrock",
+      "input_tokens": 144000,
+      "output_tokens": 36000,
+      "attempt": 1,
+      "invocation_status": "success",
+      "tags": {
+        "workflow": "support",
+        "team": "customer-experience"
+      },
+      "cost_micros": 18000000
+    },
+    {
+      "id": "2026-10-usage-2",
+      "period": "2026-10",
+      "workflow": "support",
+      "outcome_id": "2026-10-ticket-2",
+      "model": "synthetic-bedrock-standard",
+      "tokens": 240000,
+      "shared": false,
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "billing_line_id": "2026-10-bill-bedrock",
+      "input_tokens": 192000,
+      "output_tokens": 48000,
+      "attempt": 1,
+      "invocation_status": "success",
+      "tags": {
+        "workflow": "support",
+        "team": "customer-experience"
+      },
+      "cost_micros": 24000000
+    },
+    {
+      "id": "2026-10-usage-3",
+      "period": "2026-10",
+      "workflow": "support",
+      "outcome_id": "2026-10-ticket-3",
+      "model": "synthetic-bedrock-premium",
+      "tokens": 100000,
+      "shared": false,
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "billing_line_id": "2026-10-bill-bedrock",
+      "input_tokens": 80000,
+      "output_tokens": 20000,
+      "attempt": 1,
+      "invocation_status": "failure",
+      "tags": {
+        "workflow": "support",
+        "team": "customer-experience"
+      },
+      "cost_micros": 10000000
+    },
+    {
+      "id": "2026-10-usage-4",
+      "period": "2026-10",
+      "workflow": "support",
+      "outcome_id": "2026-10-ticket-4",
+      "model": "synthetic-bedrock-premium",
+      "tokens": 380000,
+      "shared": false,
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "billing_line_id": "2026-10-bill-bedrock",
+      "input_tokens": 304000,
+      "output_tokens": 76000,
+      "attempt": 1,
+      "invocation_status": "success",
+      "tags": {
+        "workflow": "support",
+        "team": "customer-experience"
+      },
+      "cost_micros": 38000000
+    },
+    {
+      "id": "2026-10-usage-5",
+      "period": "2026-10",
+      "workflow": "support",
+      "outcome_id": "2026-10-ticket-5",
+      "model": "synthetic-bedrock-premium",
+      "tokens": 350000,
+      "shared": false,
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "billing_line_id": "2026-10-bill-bedrock",
+      "input_tokens": 280000,
+      "output_tokens": 70000,
+      "attempt": 1,
+      "invocation_status": "failure",
+      "tags": {
+        "workflow": "support",
+        "team": "customer-experience"
+      },
+      "cost_micros": 35000000
+    },
+    {
+      "id": "2026-10-shared",
+      "period": "2026-10",
+      "workflow": null,
+      "outcome_id": null,
+      "model": "synthetic-bedrock-overhead",
+      "tokens": 0,
+      "shared": true,
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "billing_line_id": "2026-10-bill-bedrock",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "attempt": 1,
+      "invocation_status": "overhead",
+      "tags": {
+        "workflow": null,
+        "team": "platform"
+      },
+      "cost_micros": 20000000
+    },
+    {
+      "id": "2026-10-untagged",
+      "period": "2026-10",
+      "workflow": null,
+      "outcome_id": null,
+      "model": "synthetic-bedrock-standard",
+      "tokens": 30000,
+      "shared": false,
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "billing_line_id": "2026-10-bill-bedrock",
+      "input_tokens": 24000,
+      "output_tokens": 6000,
+      "attempt": 1,
+      "invocation_status": "success",
+      "tags": {
+        "workflow": null,
+        "team": "platform"
+      },
+      "cost_micros": 3000000
+    },
+    {
+      "id": "2026-10-usage-3-retry",
+      "period": "2026-10",
+      "workflow": "support",
+      "outcome_id": "2026-10-ticket-3",
+      "model": "synthetic-bedrock-premium",
+      "tokens": 200000,
+      "shared": false,
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "billing_line_id": "2026-10-bill-bedrock",
+      "input_tokens": 160000,
+      "output_tokens": 40000,
+      "attempt": 2,
+      "invocation_status": "success",
+      "tags": {
+        "workflow": "support",
+        "team": "customer-experience"
+      },
+      "cost_micros": 20000000
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "2026-09-ticket-1",
+      "period": "2026-09",
+      "workflow": "support",
+      "status": "success"
+    },
+    {
+      "id": "2026-09-ticket-2",
+      "period": "2026-09",
+      "workflow": "support",
+      "status": "success"
+    },
+    {
+      "id": "2026-09-ticket-3",
+      "period": "2026-09",
+      "workflow": "support",
+      "status": "success"
+    },
+    {
+      "id": "2026-09-ticket-4",
+      "period": "2026-09",
+      "workflow": "support",
+      "status": "failure"
+    },
+    {
+      "id": "2026-10-ticket-1",
+      "period": "2026-10",
+      "workflow": "support",
+      "status": "success"
+    },
+    {
+      "id": "2026-10-ticket-2",
+      "period": "2026-10",
+      "workflow": "support",
+      "status": "success"
+    },
+    {
+      "id": "2026-10-ticket-3",
+      "period": "2026-10",
+      "workflow": "support",
+      "status": "success"
+    },
+    {
+      "id": "2026-10-ticket-4",
+      "period": "2026-10",
+      "workflow": "support",
+      "status": "success"
+    },
+    {
+      "id": "2026-10-ticket-5",
+      "period": "2026-10",
+      "workflow": "support",
+      "status": "failure"
+    }
+  ],
+  "billing_lines": [
+    {
+      "id": "2026-09-bill-bedrock",
+      "period": "2026-09",
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "cost_micros": 105000000
+    },
+    {
+      "id": "2026-10-bill-bedrock",
+      "period": "2026-10",
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "AmazonBedrock",
+      "cost_micros": 171000000
+    }
+  ]
+}
