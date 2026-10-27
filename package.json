@@ -1,15 +1,27 @@
 {
-  "name": "tokenomics-prototype",
-  "version": "0.1.0",
+  "name": "tokenomics-workbench",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
     "test": "node --test",
-    "check": "node --check src/engine.js && node --check src/server.js && node --check public/app.js",
-    "test:browser": "node scripts/browser-smoke.js"
+    "check": "node scripts/check.js",
+    "test:browser": "node scripts/browser-smoke.js",
+    "fixture": "node scripts/generate-fixture.js",
+    "lint": "eslint .",
+    "format:check": "prettier --check ."
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13.0"
+  },
+  "optionalDependencies": {
+    "@aws-sdk/client-bedrock-runtime": "3.1157.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.13.0",
+    "globals": "17.13.0",
+    "prettier": "3.9.10"
   }
 }

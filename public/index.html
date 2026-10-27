@@ -1,7 +1,118 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tokenomics · Spend to outcome</title><link rel="stylesheet" href="/style.css"><script type="module" src="/app.js"></script></head>
-<body><div class="shell"><header><a class="brand" href="/">◈ tokenomics</a><span class="badge">LOCAL PROTOTYPE · SYNTHETIC AWS DATA</span></header>
-<main><section class="intro"><p class="eyebrow">AI FINOPS / EVIDENCE WORKBENCH</p><h1>Follow the spend.<br>Find the outcome.</h1><p class="lede">An auditable view of AI support costs, from billing records to resolved tickets.</p><div class="actions"><button id="sample">Load synthetic AWS example</button><label class="upload">Import JSON<input id="file" type="file" accept=".json,application/json"></label><a href="/api/sample" download="synthetic-aws-support.json">Download sample ↗</a><button id="clear" class="quiet">Clear</button></div><p class="hint">Simplified AWS billing + Bedrock invocation schemas. Illustrative costs, not AWS pricing. No cloud connection or model calls.</p></section>
-<p id="status" role="status" aria-live="polite"></p><p id="error" role="alert" hidden></p>
-<section id="empty" class="empty"><h2>Your evidence starts here</h2><p>Load the example or import a synthetic JSON file (up to 2 MB). Nothing is saved; refreshing clears the analysis.</p></section>
-<div id="results" hidden></div></main><footer>Deterministic investigation · USD · Local, ephemeral analysis · Not production software</footer></div></body></html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Tokenomics · Investigation workbench</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to workspace</a>
+    <aside class="sidebar">
+      <a href="#/overview" class="brand"
+        ><span class="brand-symbol">t</span>tokenomics<span class="brand-dot">.</span></a
+      >
+      <div class="workspace-mark">
+        <span class="avatar">A</span>
+        <div>AWS demo workspace<small>LOCAL · SINGLE USER</small></div>
+      </div>
+      <p class="nav-label">WORKSPACE</p>
+      <nav aria-label="Workspace">
+        <a href="#/overview" data-nav="overview">◫ <span>Overview</span></a
+        ><a href="#/investigations" data-nav="investigations"
+          >⌕ <span>Investigations</span><span id="inv-count" class="nav-count"></span></a
+        ><a href="#/quality" data-nav="quality">◇ <span>Data quality</span></a
+        ><a href="#/evidence" data-nav="evidence">▤ <span>Evidence explorer</span></a
+        ><a href="#/actions" data-nav="actions">□ <span>Action tracker</span></a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="offline-indicator"><span class="dot"></span> Offline deterministic</div>
+        <p>Evidence first.<br />Every number has a source.</p>
+        <a href="#/settings" data-nav="settings">Workspace & history →</a
+        ><small>v0.2 · AWS-inspired synthetic data</small>
+      </div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <div>
+          <span class="breadcrumb">Workspace</span><span class="slash">/</span
+          ><span id="crumb">Overview</span>
+        </div>
+        <div class="top-actions">
+          <span class="pill neutral">SYNTHETIC DATA</span
+          ><button id="import-open" class="button small">＋ Import data</button>
+        </div>
+      </header>
+      <div class="status-area">
+        <div id="error" class="notice error" role="alert" hidden></div>
+        <div id="status" role="status" aria-live="polite"></div>
+      </div>
+      <main id="main" tabindex="-1">
+        <div id="page-heading"></div>
+        <section id="filters" aria-label="Analysis filters"></section>
+        <div id="content" aria-live="polite">
+          <div class="loading"><span class="spinner"></span>Opening your local workspace…</div>
+        </div>
+      </main>
+      <footer>
+        Exact microdollar calculations <span>·</span> Synthetic AWS records <span>·</span> No cloud
+        connection <span>·</span> Local single-user preview
+      </footer>
+    </div>
+    <dialog id="import-dialog" aria-labelledby="import-title">
+      <div class="dialog-head">
+        <div>
+          <p class="eyebrow">DATA INGESTION</p>
+          <h2 id="import-title">Bring the evidence together</h2>
+        </div>
+        <button class="icon-button" data-close="import-dialog" aria-label="Close import">✕</button>
+      </div>
+      <p>
+        Import a synthetic JSON dataset. Existing datasets and investigations remain saved locally.
+      </p>
+      <div class="import-choice">
+        <span class="large-icon">◫</span>
+        <div>
+          <h3>Explore the AWS example</h3>
+          <p>
+            Six months · two accounts · three workflows<br />Retries, failures and reconciliation
+            differences included.
+          </p>
+        </div>
+        <button id="sample" class="button">Load example</button>
+      </div>
+      <label class="file-drop" for="file"
+        ><span class="large-icon">↑</span><b>Choose a synthetic JSON file</b
+        ><span>Schema v1 or v2 · up to 2 MB · USD only</span
+        ><input id="file" type="file" accept=".json,application/json"
+      /></label>
+      <details>
+        <summary>Import contract and privacy</summary>
+        <p>
+          Use integer <code>cost_micros</code> and <code>invoice_micros</code> (1 USD = 1,000,000).
+          Schema v2 includes ordered start/end dates and outcome account/region/team dimensions. All
+          references and billing totals are validated. The synthetic flag is an assertion, not a
+          data-classification detector. Imports persist in the local SQLite database.
+        </p>
+        <a href="/api/sample" download="tokenomics-aws-synthetic.json"
+          >Download complete sample schema →</a
+        >
+      </details>
+      <p id="import-error" class="notice error" role="alert" hidden></p>
+    </dialog>
+    <dialog id="evidence-dialog" aria-labelledby="evidence-title">
+      <div class="dialog-head">
+        <div>
+          <p class="eyebrow">SOURCE RECORDS</p>
+          <h2 id="evidence-title">Evidence</h2>
+        </div>
+        <button class="icon-button" data-close="evidence-dialog" aria-label="Close evidence">
+          ✕
+        </button>
+      </div>
+      <div id="evidence-body"></div>
+    </dialog>
+  </body>
+</html>

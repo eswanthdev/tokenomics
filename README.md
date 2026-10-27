@@ -1,89 +1,112 @@
-# tokenomics
+# Tokenomics investigation workbench
 
-A local, runnable evidence-backed AI FinOps prototype for Eswanth. Import synthetic AWS-style costs and invocation records, reconcile billing, allocate shared spend, investigate a period change, and connect spend to successful support outcomes.
+An AWS-first, evidence-backed AI FinOps workbench for a **local single user**. Follow synthetic billing and Bedrock-style usage through reconciliation, allocation, variance investigation and workflow outcomes. Save investigations, inspect exact source records, and track review actions with history.
 
-**Synthetic demo, deterministic investigation, no live LLM agent.** No AWS credentials, SDK, cloud access, model calls, database, or deployment. Not production-ready. The server binds to `127.0.0.1` and stores no imports. Refreshing clears the view.
+This is a substantial working preview, not a production-readiness claim. The shipped app is **offline and deterministic**. It makes no AWS or model calls, discovers no credentials, and executes no cloud changes.
 
-## Run
+## Run locally
 
-Requires Node.js 22+; no packages to install.
+Requires **Node.js 22.13+** (tested locally on Node 22.13.0 and Node 24.19.0) and npm. SQLite is supplied by Node; no database service is needed. Node 22 may print an experimental SQLite warning.
 
 ```sh
+npm ci --ignore-scripts
 npm start
 # Open http://127.0.0.1:3000
-npm test
-npm run check
-npm run test:browser  # optional: local Chromium at /usr/bin/chromium
-# CHROMIUM=/path/to/chromium npm run test:browser
 ```
 
-Click **Load synthetic AWS example**, or download the sample, modify it and use **Import JSON**. A rejected import clears the previous report to avoid showing stale results. `PORT=3001 npm start` selects another local port. Stop with Ctrl-C.
+Windows PowerShell, from this repository:
 
-The optional browser test uses headless Chromium with `--no-sandbox` for this container and a temporary profile. Use only trusted local content. It writes a mobile screenshot to `/tmp/tokenomics-mobile.png`, removes its profile, and stops the test server/browser.
+```powershell
+node --version
+npm.cmd ci --ignore-scripts
+npm.cmd start
+```
 
-## What works
+On first launch, the app seeds six months of synthetic AWS records, two saved investigations and one proposed review action. Stop with Ctrl+C. Restarting restores the workspace. No API key is needed. The offline app itself can start without npm dependencies; installation provides lint/format gates and the optional SDK adapter.
 
-- Browser import, strict core-field validation, actionable errors, empty state and clear/reset; 2 MB payload and 5,000 records per collection limits.
-- Invoice-to-billing-line validation; billing-line-to-usage reconciliation with source links. Missing usage stays a gap.
-- Workflow attribution by tags, token-weighted allocation of shared costs, and an explicit unallocated bucket.
-- Period-over-period contributions by model/cost group, with references to every contributing source. Contributions sum exactly to observed spend change.
-- Successful and failed workflow counts, linked-cost coverage, direct cost per successful outcome and fully allocated cost per successful outcome.
-- Source billing, usage and outcome tables, including retries and failures, and visible assumptions/unknowns.
+`PORT=3001 npm start` changes the port on Unix. In PowerShell, use `$env:PORT = '3001'` before starting. The server binds to `127.0.0.1` only.
 
-## Synthetic AWS-inspired schema
+## Explore the release
 
-See `fixtures/support.json` for a complete import. This is a **simplified custom schema inspired by AWS billing exports/CUR and Bedrock invocation records**, not a CUR parser, supported AWS export format, or live connector. Account `000000000001` is fictional. Model names are fictional; costs are illustrative fixed values, **not current AWS rates**. No pricing lookup or rate claims are made.
+1. **Overview:** select comparison periods and account, region, model, workflow or team. Inspect spend trends, rule-based anomaly signals and additive cost drivers.
+2. **Investigations:** open a seeded case or ask a suggested question. Watch the visible tool steps, inspect calculations and click a source-record link. Supported results save automatically with the original scope and dataset version.
+3. **Data quality:** examine positive/negative billing gaps, unallocated spend, missing outcome links and the shared allocation ledger. The screen explicitly labels the broader scope of reconciliation checks.
+4. **Evidence explorer:** search and paginate imported usage, billing and outcome records; inspect exact JSON or export a dataset.
+5. **Action tracker:** track an investigation recommendation, assign a local owner and update status/notes. These are review tasks, not automated changes or verified savings.
+6. **Workspace & history:** activate earlier datasets, clear the active view without deleting saved work, and inspect audit events.
 
-Top-level fields:
+The guided question interface uses four explicit keyword-routed intents: spend variance, retries/failures, billing quality, and outcome cost. It is not arbitrary natural-language understanding. Periods and dimensions come from the selected controls, not from free-text dates. Unsupported requests are rejected without saving a fabricated answer.
 
-| Field | Meaning |
-| --- | --- |
-| `schema_version` | Must be `1` |
-| `synthetic` | Must be `true`; this flag is an assertion, not automatic data classification |
-| `currency` | USD only |
-| `periods` | Exactly two IDs in baseline/current order, each with integer `invoice_micros` |
-| `billing_lines` | Unique ID, period, fictional 12-digit `account_id`, region, service and `cost_micros`; period sums must equal invoices |
-| `usage` | Unique ID, period, billing reference, account/region/service, fictional model, token counts, cost, allocation tags and invocation metadata |
-| `outcomes` | Unique ID, period, workflow and `success`/`failure` |
+## Preview
 
-Every usage record requires `billing_line_id`, `account_id`, `region`, `service`, `model`, nonnegative integer `cost_micros`, `tokens`, `input_tokens`, `output_tokens`, boolean `shared`, `workflow` (ID or null), `outcome_id` (ID or null), integer `attempt` >= 1, `invocation_status` (`success`, `failure`, or `overhead`) and `tags` with `team` and `workflow`. Input + output tokens must equal total tokens. The workflow tag must equal the workflow field. References must match period/workflow or period/account/region/service as appropriate. IDs use 1–80 ASCII letters, digits, dots, underscores or hyphens. Monetary and token source fields are capped at 1 billion each. Unknown fields are ignored, not rendered.
+![Desktop overview](docs/screenshots/desktop-overview.png)
 
-A usage ID is the deduplication key; different IDs are treated as distinct events. Attempt numbers are descriptive, not an enforced retry sequence. `outcome_id` joins multiple attempts to one workflow outcome. Invocation failure can therefore belong to an ultimately successful workflow. Cost-only shared overhead uses zero tokens and null workflow/outcome; an untagged non-shared record stays unallocated.
+[Investigation](docs/screenshots/desktop-investigation.png) · [Detailed findings](docs/screenshots/desktop-investigation-findings.png) · [Data quality](docs/screenshots/desktop-quality.png) · [Mobile overview](docs/screenshots/mobile-overview.png) · [Mobile investigation](docs/screenshots/mobile-investigation.png)
 
-## Calculations and expected example
+Screenshots are from automated Chromium runs against a disposable local workspace. The browser script recreates them.
 
-Amounts must be exactly representable as integer microdollars; fractional microdollars are rejected. Import adapters must explicitly handle finer source precision, never silently truncate it. All source money, totals and allocations use integer microdollars (1 USD = 1,000,000 micros). Allocation multiplication uses `BigInt` to avoid intermediate precision loss. Shared source amounts are split across workflows by tagged non-shared token counts within the period. Floor each share, then distribute remaining microdollars by descending remainder, with workflow ID as a deterministic tie-break. Zero eligible tokens leaves the entire shared source unallocated. This policy is illustrative, not a measurement of overhead consumed.
+## Financial and evidence guarantees within this scope
 
-| Measure | September | October |
-| --- | ---: | ---: |
-| Billing | $105.00 | $171.00 |
-| Imported usage | $100.00 | $168.00 |
-| Billing − usage gap | $5.00 | $3.00 |
-| Allocated support spend | $100.00 | $165.00 |
-| Unallocated | $0.00 | $3.00 |
-| Successful / failed outcomes | 3 / 1 | 4 / 1 |
-| Direct spend linked to successful outcomes | $45.00 | $110.00 |
-| Direct cost per success | $15.00 | $27.50 |
-| All allocated support cost per success | $33.33 | $41.25 |
+- Monetary inputs are integer **microdollars**: 1 USD = 1,000,000 `micros`. Aggregation preserves sub-cent requests; display cards round to cents, while tables and source records expose up to six decimals.
+- Shared costs are allocated **before filtering**, separately within each period/account/region. Workflow/team weights use tagged, non-shared token volume. Largest remainder conserves every microdollar with stable tie-breaking. No eligible weight leaves a shared source unallocated.
+- Scoped workflow totals project that fixed ledger. Filters never silently redistribute costs. Model-group and other dimensional contributions sum to the exact observed spend change.
+- Model-level token-volume decomposition holds the baseline observed blended cost/token fixed; the remaining rate/mix residual conserves the delta. Integer rational arithmetic and `BigInt` multiplication prevent intermediate rounding loss. Unsafe counterfactual projections are omitted rather than rounded into an inaccurate number. This is not causal price attribution.
+- Reconciliation is billed cost minus matched invocation cost, including negative gaps. Invoice summaries must equal billing lines; usage mismatches remain visible. Billing has no trustworthy model/workflow/team attribution, so reconciliation uses only account and region filters.
+- Direct cost per successful outcome divides costs linked to successful outcomes, including their retries, by successful outcomes. Fully allocated cost per success also includes failed-workflow spend and shared allocation. Neither is ROI or business value. Missing links are explicit. Model-filtered outcome denominators are unavailable rather than invented.
+- Investigations retain an immutable SHA-256 dataset version, scope, computed findings and valid source IDs. Viewing another dataset does not silently change saved evidence.
 
-October's $68.00 increase (68%) is premium +$60, standard +$18, and shared overhead −$10. A $10 failed invocation plus a $20 retry both link to October ticket 3; all $30 count toward that successful outcome. Failed workflow costs remain in total allocated spend but not the successful-outcome direct numerator.
+The fixture's September/October comparison is tested against explicit expected values:
 
-Direct cost per success = costs linked to successful outcomes / count of successful outcomes. Allocated cost per success = all workflow-tagged plus allocated shared costs / successful outcomes. Monetary amounts display up to six decimals so sub-cent gaps stay visible. Exact numerators and denominators remain in the API; ratios and percentages are rounded only for display. Zero denominators return null, rendered as N/A. These are costs, **not ROI**, profit or verified business value. Missing links can understate direct costs, even when an outcome has at least one linked record.
+| Measure                                        |   September |                 October |
+| ---------------------------------------------- | ----------: | ----------------------: |
+| Observed spend                                 | $350.363213 |             $422.566469 |
+| Unallocated spend                              |   $1.600006 |               $9.600034 |
+| October spend change                           |           — |             +$72.203256 |
+| October successful outcomes / linked successes |           — |               103 / 101 |
+| Direct successful-outcome cost numerator       |           — |             $307.095188 |
+| Repeated-attempt spend                         |           — |               $8.008893 |
+| October account 1 / account 2 billing gaps     |           — | +$7.250011 / −$1.250003 |
 
-## Architecture and future integration
+September has 30 days and October 31. The UI warns that raw totals are not duration-normalized.
 
-- `src/engine.js`: pure validation, reconciliation, allocation, outcome metrics and `investigate(data, periods)`.
-- `src/server.js`: small HTTP adapter, fixed static routes, sample GET and stateless `POST /api/analyze`.
-- `public/`: responsive interface without third-party assets/scripts.
-- `test/`: independent expected-value finance tests and HTTP integration checks.
-- `scripts/browser-smoke.js`: real Chromium import/report/error/mobile checks through DevTools.
+## Imports and data boundaries
 
-`investigate` is the future model/tool integration boundary. Its evidence bundle includes deterministic metrics, source IDs, contributions and unknowns; a future model could narrate that bundle behind a separate adapter. The arithmetic, references and policy must stay authoritative and independently tested. This version makes no model call and is explicitly labeled `deterministic-evidence-v1`.
+[Schema and policies](docs/DATA_CONTRACT.md) describes the complete contract and limitations. `fixtures/workbench.json` is schema v2: six periods, two fictional accounts, two regions, three workflows, 676 usage rows, and 648 outcomes. Regenerate deterministically with `npm run fixture`. The original two-period `fixtures/support.json` remains as a v1 compatibility fixture.
 
-## Limits and next steps
+These are **simplified custom AWS billing-export/CUR-inspired and Bedrock invocation-style schemas**, not full CUR compatibility, actual AWS exports, live connections or current AWS pricing. Fixed sample costs and model names are illustrative. Only synthetic USD imports are accepted; the `synthetic` flag is a user assertion, not a reliable classifier of sensitive data.
 
-Only two manually selected periods, USD and nonnegative microdollar amounts are supported. Period duration, completeness, success labels, tag truth and duplicate events with different IDs are not independently verified. Amounts finer than one microdollar, credits/refunds, taxes, commitments, discounts, currencies, invoice timing, and AWS CUR columns need an explicit ingestion design. Token weighting ignores differences in input/output rates and model prices. Model-group changes show contributions, not causal volume/rate/mix decomposition.
+## Persistence and local security
 
-There is no persistence, authentication, authorization, audit-log service or multi-user isolation. Imports are intended to contain synthetic records only; the flag cannot verify that. This local prototype has bounded payloads and escaped output but has not undergone production security or accessibility review.
+By default data lives in `.local/tokenomics.sqlite`, excluded from Git. `TOKENOMICS_DATA_DIR` selects a different local directory. SQLite transactions, foreign keys, WAL and full synchronous commits protect related updates; action version checks reject stale edits. Investigation request IDs are persisted with their results: retries return the original case, and reusing an ID for different input is rejected. Import failure retains the previous dataset. Identical raw JSON content deduplicates by hash.
 
-Next: validate the workflow with users; define authoritative billing/invocation identifiers and source precision requirements; add explicit period windows and coverage checks; design offline AWS export adapters and allocation policies; then evaluate a read-only narrative agent against verified evidence. Live integrations, credentials and publication require a separate decision.
+This boundary is **local single-user**, without production authentication, tenant isolation, encryption-at-rest or a tamper-proof audit service. Someone with access to the machine/database can read or change it. The app rejects non-loopback hosts and foreign origins, requires a per-process token for writes, uses parameterized SQL, escapes rendered content and serves a restrictive CSP. These are tested controls, not a completed security assessment.
+
+To back up, stop the app cleanly, then copy the entire data directory. Do not copy only the database while a server has an active WAL. Dataset export is not a full workspace backup. There is no automatic destructive reset or migration beyond schema version 2; unknown newer database versions fail closed. Local limits: 30 datasets, 200 investigations, 2 MB per import and 50,000 expanded allocation entries. The UI shows the latest 500 audit events; the database retains older events.
+
+## Optional Bedrock integration
+
+The code includes a real Bedrock Converse adapter and pinned optional AWS SDK. **It is implemented and contract-tested, but not live-verified.** The default server never constructs a provider client and exposes no credentials or provider-enable UI.
+
+An embedding application can explicitly construct `createBedrockSdkAdapter` with operator opt-in, a region/model ID and a credential-provider function, then inject it into `createServer({modelAdapter})`. No ambient credential discovery occurs in the factory. No credentials were configured or resolved during this work. A future authorized integration should review cost budgets, model-specific tool support and data handling before live use.
+
+The adapter has four read-only tools and an immutable application-selected scope. It allows at most four model turns and six tool calls, bounds request/response sizes and timeouts, and rejects unknown tools/arguments/IDs. Final model output can only select IDs of deterministic findings already returned by tools. Model prose, arithmetic and invented evidence are not rendered. It cannot update actions or cloud resources. See [architecture and threat boundary](docs/ARCHITECTURE.md).
+
+## Quality gates
+
+```sh
+npm test                 # engine, data, persistence, API and mocked Bedrock tests
+npm run check            # syntax checks for all JS source/test/script files
+npm run lint             # ESLint
+npm run format:check     # Prettier
+npm run test:browser     # Chromium journeys and screenshots
+```
+
+Browser testing requires a local Chromium/Chrome executable. On Linux the default is `/usr/bin/chromium`; override `CHROMIUM` as needed. In PowerShell, for example: `$env:CHROMIUM = 'C:\Program Files\Google\Chrome\Application\chrome.exe'`. The browser test uses a temporary profile and a disposable in-memory workspace; it uses `--no-sandbox` for container compatibility and must only visit trusted local content.
+
+The pinned GitHub Actions configuration runs Node 22/24 quality gates with read-only repository permissions and no cloud credentials or provider calls. It is local configuration only: this release has not been pushed and hosted CI has not run. The previously denied GitHub Actions API request was not retried.
+
+## Honest gaps and next steps
+
+The fixture demonstrates a product workflow; it is not a benchmark of real AWS cost coverage. Finer-than-microdollar inputs, credits/refunds as negative source amounts, multi-currency billing, commitments, discounts, taxes, and full AWS CUR normalization are not implemented. Outcome labels, duplicate events with different IDs, imported attempt sequences and full source completeness are not independently verified. Costs are attributed by a declared policy rather than measured overhead consumption.
+
+Next useful work is validating the investigation workflow with real operators, designing read-only offline AWS export adapters and source-quality checks, and evaluating outcome definitions. Live model evaluation, actual AWS integration, production auth/tenancy, load testing, and an independent security/accessibility review remain separate work. No publication, deployment or access changes are part of this local release.
