@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { createServer } from '../src/server.js';
+import { createServer, previewOriginFromEnv } from '../src/server.js';
 async function setup(t, options = {}) {
   const server = createServer(options);
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
@@ -204,4 +204,120 @@ test('duplicate in-flight model request is rejected before a second provider cal
   assert.equal(calls, 1);
   release();
   assert.equal((await first).status, 502);
+});
+
+test('preview configuration is exact, opt-in and fails closed', () => {
+  const env = {
+    CODESPACES: 'true',
+    CODESPACE_NAME: 'example-workspace-abc',
+    GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN: 'app.github.dev',
+  };
+  const origin = 'https://example-workspace-abc-3000.app.github.dev';
+  assert.equal(previewOriginFromEnv({}, 3000), null);
+  assert.equal(previewOriginFromEnv(env, 3000), origin);
+  assert.equal(previewOriginFromEnv({ TOKENOMICS_PREVIEW_ORIGIN: origin }, 3000), origin);
+  for (const value of [
+    '',
+    '*',
+    origin + '/',
+    origin + '.evil.test',
+    origin + ':443',
+    origin.replace('https:', 'http:'),
+    'https://*.app.github.dev',
+    'https://example-65536.app.github.dev',
+    origin + '?x=1',
+    'https://user@example-3000.app.github.dev',
+  ]) {
+    assert.throws(() => previewOriginFromEnv({ TOKENOMICS_PREVIEW_ORIGIN: value }, 3000));
+    assert.throws(() => createServer({ previewOrigin: value }));
+  }
+  for (const patch of [
+    { CODESPACE_NAME: '../evil' },
+    { CODESPACE_NAME: 'name.evil' },
+    { GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN: 'attacker.test' },
+    { GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN: undefined },
+  ])
+    assert.throws(() => previewOriginFromEnv({ ...env, ...patch }, 3000));
+  for (const port of [0, 65536, NaN, 3.5]) assert.throws(() => previewOriginFromEnv(env, port));
+});
+
+test('exact preview host permits same-origin UI requests and rejects spoofing and CSRF', async (t) => {
+  const origin = 'https://example-workspace-abc-3000.app.github.dev';
+  const host = new URL(origin).host;
+  const { base, state } = await setup(t, { previewOrigin: origin });
+  const request = (path, method = 'GET', headers = {}) =>
+    new Promise((resolve, reject) => {
+      const req = http.request(
+        base + path,
+        {
+          method,
+          headers: { Host: host, ...headers },
+        },
+        (res) => {
+          let body = '';
+          res.on('data', (chunk) => {
+            body += chunk;
+          });
+          res.on('end', () => resolve({ status: res.statusCode, body }));
+        },
+      );
+      req.on('error', reject);
+      req.end(method === 'GET' ? undefined : '{}');
+    });
+  assert.equal((await request('/')).status, 200);
+  const previewState = await request('/api/state', 'GET', { Origin: origin });
+  assert.equal(previewState.status, 200);
+  assert.equal(JSON.parse(previewState.body).csrf, state.csrf);
+  const write = {
+    Origin: origin,
+    'Content-Type': 'application/json',
+    'X-Workspace-Token': state.csrf,
+    'Sec-Fetch-Site': 'same-origin',
+  };
+  assert.equal((await request('/api/clear', 'POST', write)).status, 200);
+  for (const headers of [
+    { ...write, Origin: 'https://attacker.test' },
+    { ...write, Origin: 'null' },
+    { ...write, Origin: 'http://' + host },
+    { ...write, Origin: 'https://different-3000.app.github.dev' },
+    { ...write, Origin: '' },
+    { ...write, 'Sec-Fetch-Site': 'cross-site' },
+    { ...write, 'X-Workspace-Token': 'incorrect' },
+    { ...write, Host: host + '.attacker.test' },
+    { ...write, Host: 'different-3000.app.github.dev' },
+    { ...write, Host: 'attacker.test', 'X-Forwarded-Host': host, 'X-Forwarded-Proto': 'https' },
+    { ...write, Host: new URL(base).host, 'X-Forwarded-Host': host, 'X-Forwarded-Proto': 'https' },
+  ])
+    assert.equal((await request('/api/clear', 'POST', headers)).status, 403);
+  assert.equal(
+    (
+      await request('/api/clear', 'POST', {
+        'Content-Type': 'application/json',
+        'X-Workspace-Token': state.csrf,
+      })
+    ).status,
+    403,
+  );
+  assert.equal(
+    (await request('/api/state', 'GET', { Origin: 'https://attacker.test' })).status,
+    403,
+  );
+  assert.equal((await request('/api/state', 'GET', { Host: host + ':443' })).status, 403);
+  assert.equal(
+    (await request('/api/state', 'GET', { Host: 'attacker.test', Forwarded: 'host=' + host }))
+      .status,
+    403,
+  );
+  const local = await fetch(base + '/api/state');
+  assert.equal(local.status, 200);
+  const unconfigured = await setup(t);
+  const denied = await new Promise((resolve, reject) => {
+    http
+      .get(unconfigured.base + '/', { headers: { Host: host } }, (res) => {
+        res.resume();
+        resolve(res.statusCode);
+      })
+      .on('error', reject);
+  });
+  assert.equal(denied, 403);
 });

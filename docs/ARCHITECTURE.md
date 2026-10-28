@@ -1,6 +1,8 @@
 # Architecture and boundaries
 
-## Local application
+## Agent scope and optional interface
+
+The core is a local AI cost agent: bounded cost investigation, evidence-backed recommendations, and analysis of recorded outcomes. SQLite is agent memory and audit history. The web UI is an optional interaction surface, not a multi-tenant SaaS platform; subscriptions and administration features are outside scope. The current investigation mode is deterministic and offline. The optional Bedrock adapter is contract-tested but not live-verified, and no live execution or credentials are approved.
 
 The browser is a plain ES-module application with responsive CSS and accessible native controls/dialogs. The Node HTTP server exposes fixed static files and a narrow JSON API. Financial logic is pure; persistence is isolated from computation and provider orchestration.
 
@@ -40,7 +42,7 @@ Tool results are curated deterministic findings rather than raw imported notes. 
 
 Imported data, identifiers, questions and notes are untrusted. Validation restricts numeric and identifier fields; unknown extra text remains only in the saved source records. Evidence is shown as escaped text. Imported data cannot expand tool access or choose executable operations. Prompt text also tells the model to treat supplied content as data, but the primary controls are the external allowlist, fixed scope and strict verified-ID output contract. This is defense in depth, not a proof of prompt-injection immunity.
 
-The browser can update only local workflow state using validated API routes. Non-loopback hosts and mismatched Origin headers are rejected. Every non-GET request requires a random per-process workspace token, and JSON writes reject other media types. No CORS access is granted. CSP disallows third-party scripts, framing and external default resources. Data IDs never become filesystem paths or SQL fragments.
+The browser can update only local workflow state using validated API routes. Hosts outside localhost and the optional exact configured Codespaces preview host are rejected, as are mismatched Origin headers and cross-site Fetch Metadata. Preview writes require the matching HTTPS Origin as well as the workspace token. Forwarded request headers do not establish trust. See the README for validated preview configuration and proxy assumptions; the private Codespaces gateway supplies access control, not the app. Every non-GET request requires a random per-process workspace token, and JSON writes reject other media types. No CORS access is granted. CSP disallows third-party scripts, framing and external default resources. Data IDs never become filesystem paths or SQL fragments.
 
 These controls do not provide production user authentication. Same-machine processes or anyone with filesystem access are within the local trust boundary. The workspace is not appropriate for untrusted multi-user hosting. No AWS permissions, credentials, access policies, live requests or hosted deployment were configured in this release.
 

@@ -1,8 +1,8 @@
-# Tokenomics investigation workbench
+# Tokenomics AI cost agent
 
-An AWS-first, evidence-backed AI FinOps workbench for a **local single user**. Follow synthetic billing and Bedrock-style usage through reconciliation, allocation, variance investigation and workflow outcomes. Save investigations, inspect exact source records, and track review actions with history.
+An AWS-first, evidence-backed **AI cost agent for a local single user**. Its scope is to investigate costs with bounded tools and source evidence, recommend review actions, and support verification against recorded workflow outcomes. The web workbench is an optional interaction surface; local persistence provides agent memory and audit history. Multi-tenant hosting, subscriptions and SaaS administration are outside the project scope.
 
-This is a substantial working preview, not a production-readiness claim. The shipped app is **offline and deterministic**. It makes no AWS or model calls, discovers no credentials, and executes no cloud changes.
+The current investigation capability is **offline and deterministic**: supported questions invoke fixed tools, with exact financial calculations and evidence references. It is not a live LLM agent. The optional Bedrock adapter is implemented and contract-tested but **not live-verified**. No AWS or model calls, credential discovery, or cloud changes occur in the shipped mode. Recorded outcomes support analysis; they do not prove that a recommendation caused savings. This is a working preview, not a production-readiness claim.
 
 ## Run locally
 
@@ -25,6 +25,25 @@ npm.cmd start
 On first launch, the app seeds six months of synthetic AWS records, two saved investigations and one proposed review action. Stop with Ctrl+C. Restarting restores the workspace. No API key is needed. The offline app itself can start without npm dependencies; installation provides lint/format gates and the optional SDK adapter.
 
 `PORT=3001 npm start` changes the port on Unix. In PowerShell, use `$env:PORT = '3001'` before starting. The server binds to `127.0.0.1` only.
+
+## Browser-only Codespaces preview
+
+Use Node 22.13+ in the Codespace terminal, then run `npm ci --ignore-scripts` and `npm start`. In the **Ports** panel, forward port **3000**, keep visibility **Private**, and use **Open in Browser**. Do not make this single-user workspace public.
+
+The launcher derives exactly one HTTPS preview origin from `CODESPACES=true`, a validated `CODESPACE_NAME`, `GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN=app.github.dev`, and the selected `PORT` (default 3000). Invalid Codespaces configuration stops startup. Other forwarding domains are unsupported. Alternatively, explicitly set one exact origin before starting:
+
+```sh
+export TOKENOMICS_PREVIEW_ORIGIN='https://YOUR-EXACT-CODESPACE-NAME-3000.app.github.dev'
+npm start
+```
+
+Replace the example with the actual private port URL, without a trailing slash. Wildcards, multiple origins, HTTP, credentials, paths and explicit URL ports are rejected. This option is trusted operator configuration, not a value accepted from browser requests. The server still binds only to `127.0.0.1`; it does not change port visibility, access policies or network exposure.
+
+The expected proxy preserves the external Host and browser Origin while terminating HTTPS. The app accepts only the configured exact preview Host with its matching HTTPS Origin; preview writes additionally require that Origin and the per-process workspace token. It rejects cross-site Fetch Metadata and ignores `Forwarded`/`X-Forwarded-*` headers. If a proxy rewrites Host to localhost while retaining the external Origin, requests fail closed; do not loosen checks or strip Origin to work around this. Localhost access remains supported.
+
+**Trust boundary:** GitHub's private port gateway supplies access control and TLS; this app does not authenticate users or verify port visibility. Any authorized visitor to the private port can access the single shared workspace. Local processes remain trusted. Exact host/origin checks prevent browser-origin confusion, not a malicious local client forging headers.
+
+Configuration and HTTP requests are covered by automated tests, and the normal browser journeys run locally. A real authenticated Codespaces proxy session has **not** been verified in this environment. See GitHub's [environment variables](https://docs.github.com/en/codespaces/developing-in-a-codespace/default-environment-variables-for-your-codespace) and [port forwarding](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace) documentation.
 
 ## Explore the release
 
@@ -79,7 +98,7 @@ These are **simplified custom AWS billing-export/CUR-inspired and Bedrock invoca
 
 By default data lives in `.local/tokenomics.sqlite`, excluded from Git. `TOKENOMICS_DATA_DIR` selects a different local directory. SQLite transactions, foreign keys, WAL and full synchronous commits protect related updates; action version checks reject stale edits. Investigation request IDs are persisted with their results: retries return the original case, and reusing an ID for different input is rejected. Import failure retains the previous dataset. Identical raw JSON content deduplicates by hash.
 
-This boundary is **local single-user**, without production authentication, tenant isolation, encryption-at-rest or a tamper-proof audit service. Someone with access to the machine/database can read or change it. The app rejects non-loopback hosts and foreign origins, requires a per-process token for writes, uses parameterized SQL, escapes rendered content and serves a restrictive CSP. These are tested controls, not a completed security assessment.
+This boundary is **local single-user**, without production authentication, tenant isolation, encryption-at-rest or a tamper-proof audit service. Someone with access to the machine/database can read or change it. The app rejects hosts outside localhost and the optional exact Codespaces preview host, rejects foreign origins, requires a per-process token for writes, uses parameterized SQL, escapes rendered content and serves a restrictive CSP. These are tested controls, not a completed security assessment.
 
 To back up, stop the app cleanly, then copy the entire data directory. Do not copy only the database while a server has an active WAL. Dataset export is not a full workspace backup. There is no automatic destructive reset or migration beyond schema version 2; unknown newer database versions fail closed. Local limits: 30 datasets, 200 investigations, 2 MB per import and 50,000 expanded allocation entries. The UI shows the latest 500 audit events; the database retains older events.
 
@@ -103,10 +122,10 @@ npm run test:browser     # Chromium journeys and screenshots
 
 Browser testing requires a local Chromium/Chrome executable. On Linux the default is `/usr/bin/chromium`; override `CHROMIUM` as needed. In PowerShell, for example: `$env:CHROMIUM = 'C:\Program Files\Google\Chrome\Application\chrome.exe'`. The browser test uses a temporary profile and a disposable in-memory workspace; it uses `--no-sandbox` for container compatibility and must only visit trusted local content.
 
-The pinned GitHub Actions configuration runs Node 22/24 quality gates with read-only repository permissions and no cloud credentials or provider calls. It is local configuration only: this release has not been pushed and hosted CI has not run. The previously denied GitHub Actions API request was not retried.
+The pinned GitHub Actions configuration runs Node 22/24 quality gates with read-only repository permissions and no cloud credentials or provider calls. The upgrade branch is published; hosted CI status has not been verified. The previously denied GitHub Actions API request was not retried.
 
 ## Honest gaps and next steps
 
 The fixture demonstrates a product workflow; it is not a benchmark of real AWS cost coverage. Finer-than-microdollar inputs, credits/refunds as negative source amounts, multi-currency billing, commitments, discounts, taxes, and full AWS CUR normalization are not implemented. Outcome labels, duplicate events with different IDs, imported attempt sequences and full source completeness are not independently verified. Costs are attributed by a declared policy rather than measured overhead consumption.
 
-Next useful work is validating the investigation workflow with real operators, designing read-only offline AWS export adapters and source-quality checks, and evaluating outcome definitions. Live model evaluation, actual AWS integration, production auth/tenancy, load testing, and an independent security/accessibility review remain separate work. No publication, deployment or access changes are part of this local release.
+Next useful work is validating the agent’s investigations with operators, improving read-only offline AWS export normalization and evidence quality, and defining how later outcome records can verify recommended actions. Live model evaluation or AWS integration would require separate authorization; no live execution or credentials are approved. Multi-tenant, subscription and administration features are outside scope.

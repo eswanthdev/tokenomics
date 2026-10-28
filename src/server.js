@@ -49,7 +49,41 @@ async function body(req) {
     throw new ValidationError('Invalid JSON. Download the sample for the required schema.');
   }
 }
-export function createServer({ store, seed = false, modelAdapter = null } = {}) {
+// Configuration is operator-controlled, never inferred from forwarded request headers.
+export function previewOriginFromEnv(env, port) {
+  if (env.TOKENOMICS_PREVIEW_ORIGIN !== undefined)
+    return validatePreviewOrigin(env.TOKENOMICS_PREVIEW_ORIGIN);
+  if (env.CODESPACES !== 'true') return null;
+  if (
+    !/^[a-z0-9](?:[a-z0-9-]{0,50}[a-z0-9])?$/.test(env.CODESPACE_NAME || '') ||
+    env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN !== 'app.github.dev' ||
+    !Number.isInteger(port) ||
+    port < 1 ||
+    port > 65535
+  )
+    throw new Error('Invalid Codespaces preview configuration.');
+  return validatePreviewOrigin(`https://${env.CODESPACE_NAME}-${port}.app.github.dev`);
+}
+function validatePreviewOrigin(origin) {
+  if (
+    typeof origin !== 'string' ||
+    !/^https:\/\/[a-z0-9](?:[a-z0-9-]*[a-z0-9])?-([1-9][0-9]{0,4})\.app\.github\.dev$/.test(origin)
+  )
+    throw new Error('Preview origin must be one exact HTTPS Codespaces port origin.');
+  const host = new URL(origin).hostname;
+  const port = Number(host.split('.')[0].split('-').at(-1));
+  if (host.split('.')[0].length > 63 || port > 65535)
+    throw new Error('Invalid Codespaces preview hostname or port.');
+  return origin;
+}
+export function createServer({
+  store,
+  seed = false,
+  modelAdapter = null,
+  previewOrigin = null,
+} = {}) {
+  if (previewOrigin !== null) validatePreviewOrigin(previewOrigin);
+  const previewHost = previewOrigin === null ? null : new URL(previewOrigin).host;
   const ownsStore = !store;
   store ||= new Store();
   const csrf = randomBytes(32).toString('hex');
@@ -76,12 +110,18 @@ export function createServer({ store, seed = false, modelAdapter = null } = {}) 
     res.setHeader('Cache-Control', 'no-store');
     try {
       const host = req.headers.host || '';
-      if (!/^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/.test(host))
-        throw new HttpError(403, 'Only loopback hosts are allowed.');
-      const origin = `http://${host}`,
+      const isPreview = previewHost !== null && host === previewHost;
+      if (!isPreview && !/^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/.test(host))
+        throw new HttpError(403, 'Host is not an approved local or preview host.');
+      const origin = isPreview ? previewOrigin : `http://${host}`,
         url = new URL(req.url, origin),
         path = url.pathname;
-      if (req.headers.origin && req.headers.origin !== origin)
+      if (
+        url.origin !== origin ||
+        (req.headers.origin && req.headers.origin !== origin) ||
+        req.headers['sec-fetch-site'] === 'cross-site' ||
+        (isPreview && req.method !== 'GET' && req.headers.origin !== origin)
+      )
         throw new HttpError(403, 'Cross-origin access is not allowed.');
       if (!['GET', 'POST', 'PATCH'].includes(req.method))
         throw new HttpError(405, 'Method not supported.');
@@ -285,11 +325,12 @@ export function createServer({ store, seed = false, modelAdapter = null } = {}) 
   return server;
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const port = Number(process.env.PORT || 3000);
+  const previewOrigin = previewOriginFromEnv(process.env, port);
   const dir = resolve(process.env.TOKENOMICS_DATA_DIR || '.local');
   await mkdir(dir, { recursive: true });
   const store = new Store(resolve(dir, 'tokenomics.sqlite'));
-  const server = createServer({ store, seed: true }),
-    port = Number(process.env.PORT || 3000);
+  const server = createServer({ store, seed: true, previewOrigin });
   server.listen(port, '127.0.0.1', () =>
     console.log(
       `Tokenomics workbench: http://127.0.0.1:${port}\nLocal database: ${resolve(dir, 'tokenomics.sqlite')}\nOffline deterministic mode; no provider calls.`,
