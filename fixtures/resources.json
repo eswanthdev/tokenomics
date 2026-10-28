@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "as_of": "2026-10-28T00:00:00.000Z",
+  "scopes": [
+    {
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "enabled": true
+    },
+    {
+      "account_id": "000000000002",
+      "region": "eu-west-1",
+      "enabled": true
+    }
+  ],
+  "coverage": [
+    {
+      "id": "coverage-0-ec2",
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "ec2",
+      "observed_at": "2026-10-28T00:00:00.000Z",
+      "status": "complete"
+    },
+    {
+      "id": "coverage-0-s3",
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "s3",
+      "observed_at": "2026-10-28T00:00:00.000Z",
+      "status": "complete"
+    },
+    {
+      "id": "coverage-0-cloudtrail",
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "cloudtrail",
+      "observed_at": "2026-10-28T00:00:00.000Z",
+      "status": "complete"
+    },
+    {
+      "id": "coverage-1-ec2",
+      "account_id": "000000000002",
+      "region": "eu-west-1",
+      "service": "ec2",
+      "observed_at": "2026-10-28T00:00:00.000Z",
+      "status": "complete"
+    },
+    {
+      "id": "coverage-1-s3",
+      "account_id": "000000000002",
+      "region": "eu-west-1",
+      "service": "s3",
+      "observed_at": "2026-10-28T00:00:00.000Z",
+      "status": "complete"
+    },
+    {
+      "id": "coverage-1-cloudtrail",
+      "account_id": "000000000002",
+      "region": "eu-west-1",
+      "service": "cloudtrail",
+      "observed_at": "2026-10-28T00:00:00.000Z",
+      "status": "denied"
+    }
+  ],
+  "resources": [
+    {
+      "id": "ec2-low-cpu",
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "ec2",
+      "observed_at": "2026-10-28T00:00:00.000Z",
+      "facts": {
+        "expected_samples": 4032,
+        "representative_days": 14,
+        "peaks_represented": true,
+        "histogram": [
+          {
+            "cpu_bps": 100,
+            "count": 4000
+          },
+          {
+            "cpu_bps": 1000,
+            "count": 32
+          }
+        ],
+        "dependencies": {
+          "dr": false,
+          "batch": false,
+          "burstable": false,
+          "gpu": false,
+          "memory": null,
+          "io": null,
+          "license": null,
+          "asg": null
+        },
+        "window_start": "2026-10-14T00:00:00.000Z",
+        "window_end": "2026-10-28T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "ec2-busy",
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "ec2",
+      "observed_at": "2026-10-28T00:00:00.000Z",
+      "facts": {
+        "expected_samples": 4032,
+        "representative_days": 14,
+        "peaks_represented": true,
+        "histogram": [
+          {
+            "cpu_bps": 5000,
+            "count": 4032
+          }
+        ],
+        "dependencies": {
+          "dr": false,
+          "batch": false,
+          "burstable": false,
+          "gpu": false,
+          "memory": null,
+          "io": null,
+          "license": null,
+          "asg": null
+        },
+        "window_start": "2026-10-14T00:00:00.000Z",
+        "window_end": "2026-10-28T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "s3-old-upload",
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "s3",
+      "observed_at": "2026-10-28T00:00:00.000Z",
+      "facts": {
+        "initiated_at": "2026-10-01T00:00:00.000Z",
+        "active": false,
+        "long_running": false,
+        "lifecycle_effective": false,
+        "snapshots": [
+          {
+            "at": "2026-10-27T00:00:00.000Z",
+            "complete": true,
+            "bytes": 10737418240,
+            "parts_digest": "synthetic-parts-v1"
+          },
+          {
+            "at": "2026-10-28T00:00:00.000Z",
+            "complete": true,
+            "bytes": 10737418240,
+            "parts_digest": "synthetic-parts-v1"
+          }
+        ],
+        "rate": {
+          "region": "us-east-1",
+          "unit": "GiB-month",
+          "storage_class": "multipart-staging",
+          "applicable": true,
+          "micros_per_gib_month": 23000
+        }
+      }
+    },
+    {
+      "id": "s3-cleanup-pending",
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "s3",
+      "observed_at": "2026-10-28T00:00:00.000Z",
+      "facts": {
+        "initiated_at": "2026-10-01T00:00:00.000Z",
+        "active": false,
+        "long_running": false,
+        "lifecycle_effective": true,
+        "snapshots": [
+          {
+            "at": "2026-10-27T00:00:00.000Z",
+            "complete": true,
+            "bytes": 10737418240,
+            "parts_digest": "synthetic-parts-v1"
+          },
+          {
+            "at": "2026-10-28T00:00:00.000Z",
+            "complete": true,
+            "bytes": 10737418240,
+            "parts_digest": "synthetic-parts-v1"
+          }
+        ],
+        "rate": {
+          "region": "us-east-1",
+          "unit": "GiB-month",
+          "storage_class": "multipart-staging",
+          "applicable": true,
+          "micros_per_gib_month": 23000
+        }
+      }
+    },
+    {
+      "id": "trail-org",
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "cloudtrail",
+      "observed_at": "2026-10-28T00:00:00.000Z",
+      "facts": {
+        "canonical_arn": "arn:aws:cloudtrail:us-east-1:000000000001:trail/organization-audit",
+        "kind": "organization",
+        "active": true,
+        "events": [
+          "Read",
+          "Write"
+        ],
+        "required_destination": true,
+        "billing": null,
+        "source_arn": "arn:aws:cloudtrail:us-east-1:000000000001:trail/organization-audit",
+        "home_region": "us-east-1"
+      }
+    },
+    {
+      "id": "trail-org-shadow",
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "cloudtrail",
+      "observed_at": "2026-10-28T00:00:00.000Z",
+      "facts": {
+        "canonical_arn": "arn:aws:cloudtrail:us-east-1:000000000001:trail/organization-audit",
+        "kind": "organization",
+        "active": true,
+        "events": [
+          "Read",
+          "Write"
+        ],
+        "required_destination": true,
+        "billing": null,
+        "source_arn": "arn:aws:cloudtrail:eu-west-1:000000000001:trail/organization-audit",
+        "home_region": "us-east-1"
+      }
+    },
+    {
+      "id": "trail-member",
+      "account_id": "000000000001",
+      "region": "us-east-1",
+      "service": "cloudtrail",
+      "observed_at": "2026-10-28T00:00:00.000Z",
+      "facts": {
+        "canonical_arn": "arn:aws:cloudtrail:us-east-1:000000000001:trail/member-audit",
+        "kind": "member",
+        "active": true,
+        "events": [
+          "Read",
+          "Write"
+        ],
+        "required_destination": false,
+        "billing": {
+          "avoidable_events": 100000,
+          "rate_micros_per_100k": 2000000,
+          "region": "us-east-1",
+          "verified": true,
+          "retained_trail_arn": "arn:aws:cloudtrail:us-east-1:000000000001:trail/organization-audit",
+          "surviving_coverage_verified": true
+        },
+        "source_arn": "arn:aws:cloudtrail:us-east-1:000000000001:trail/member-audit",
+        "home_region": "us-east-1"
+      }
+    }
+  ]
+}

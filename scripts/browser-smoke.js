@@ -409,9 +409,122 @@ try {
   await nav('overview');
   assert.match(await evaluate("document.querySelector('.metric strong').textContent"), /168\.00/);
 
+  // FinOps rule-agent slice: empty, seeded, persisted, evidence, errors and mobile.
+  await call('Page.navigate', { url: base + '/finops' }, sessionId);
+  await wait("document.querySelector('#status')?.textContent.includes('Local memory loaded')");
+  assert.match(
+    await evaluate("document.querySelector('#results').textContent"),
+    /No assessment yet/,
+  );
+  await click('#sample');
+  await wait(
+    "!!document.querySelector('#snapshot').value && !document.querySelector('#run').disabled",
+  );
+  await click('#run');
+  await wait(
+    "document.querySelector('#results .badge')?.textContent==='partial' && document.querySelectorAll('.finding').length>0",
+  );
+  assert.match(await evaluate("document.querySelector('#results').textContent"), /\$0.230000/);
+  assert.match(await evaluate("document.querySelector('#results').textContent"), /Coverage denied/);
+  await click('[data-ref]');
+  await wait("document.querySelector('#evidence').open");
+  assert.match(await evaluate("document.querySelector('#source').textContent"), /dataset_id/);
+  await click('#close');
+  await call(
+    'Emulation.setDeviceMetricsOverride',
+    { width: 1440, height: 1080, deviceScaleFactor: 1, mobile: false },
+    sessionId,
+  );
+  await capture('finops-desktop');
+  await evaluate("document.querySelector('.finding').scrollIntoView()");
+  await capture('finops-findings');
+  await call('Page.navigate', { url: base + '/finops' }, sessionId);
+  await wait("document.querySelectorAll('.finding').length>0");
+  await evaluate(
+    "window.originalFetch=window.fetch;window.fetch=()=>Promise.reject(Error('Offline test'));document.querySelector('#refresh').click()",
+  );
+  await wait("!document.querySelector('#error').hidden");
+  await evaluate("window.fetch=window.originalFetch;document.querySelector('#refresh').click()");
+  await wait("document.querySelector('#error').hidden");
+  // A confirmed dispatch followed by a failed refresh must preserve retry identity.
+  await evaluate(`(async()=>{window.beforeRunCount=(await (await fetch('/api/finops/state')).json()).runs.length;
+    window.fetch=(url,opts)=>String(url)==='/api/finops/state'?Promise.reject(Error('Refresh after dispatch failed')):window.originalFetch(url,opts);
+    document.querySelector('#run').click();})()`);
+  await wait(
+    "document.querySelector('#error').textContent.includes('Assessment accepted') && !document.querySelector('#run').disabled",
+  );
+  await evaluate("window.fetch=window.originalFetch;document.querySelector('#run').click()");
+  await wait("document.querySelector('#error').hidden && !document.querySelector('#run').disabled");
+  assert.equal(
+    await evaluate(
+      "(async()=>(await (await fetch('/api/finops/state')).json()).runs.length-window.beforeRunCount)()",
+    ),
+    1,
+  );
+  // A stale refresh failure must not overwrite a later successful refresh.
+  await evaluate(
+    `window.fetch=(url,opts)=>String(url)==='/api/finops/state'?new Promise((_,reject)=>{window.rejectOldRefresh=reject;}):window.originalFetch(url,opts);document.querySelector('#refresh').click();`,
+  );
+  await wait("typeof window.rejectOldRefresh==='function'");
+  await evaluate("window.fetch=window.originalFetch;document.querySelector('#refresh').click()");
+  await wait("document.querySelector('#error').hidden");
+  await evaluate(
+    "(async()=>{window.rejectOldRefresh(Error('Obsolete failure'));await new Promise(r=>setTimeout(r,30));})()",
+  );
+  assert.ok(await evaluate("document.querySelector('#error').hidden"));
+  // Failed scope loading cannot leave another snapshot's account list next to Run.
+  await evaluate(`(async()=>{
+    window.fullSnapshot=document.querySelector('#snapshot').value;
+    const data=await (await fetch('/api/finops/sample')).json();
+    data.scopes=data.scopes.slice(0,1);
+    data.coverage=data.coverage.filter(r=>r.account_id===data.scopes[0].account_id);
+    data.resources=data.resources.filter(r=>r.account_id===data.scopes[0].account_id);
+    const state=await (await fetch('/api/finops/state')).json();
+    const saved=await (await fetch('/api/finops/import',{method:'POST',headers:{'Content-Type':'application/json','X-Workspace-Token':state.csrf},body:JSON.stringify({data})})).json();
+    window.singleSnapshot=saved.dataset_id;document.querySelector('#refresh').click();
+  })()`);
+  await wait(
+    "Array.from(document.querySelector('#snapshot').options).some(o=>o.value===window.singleSnapshot) && !document.querySelector('#run').disabled",
+  );
+  assert.match(await evaluate("document.querySelector('#scope').textContent"), /000000000002/);
+  await evaluate(
+    `window.fetch=(url,opts)=>String(url).startsWith('/api/finops/evidence?')?Promise.reject(Error('Scope fetch failed')):window.originalFetch(url,opts);document.querySelector('#snapshot').value=window.singleSnapshot;document.querySelector('#snapshot').dispatchEvent(new Event('change'));`,
+  );
+  await wait("document.querySelector('#scope').textContent.includes('Scope unavailable')");
+  assert.ok(await evaluate("document.querySelector('#run').disabled"));
+  assert.doesNotMatch(
+    await evaluate("document.querySelector('#scope').textContent"),
+    /000000000002/,
+  );
+  await evaluate("window.fetch=window.originalFetch;document.querySelector('#refresh').click()");
+  await wait("!document.querySelector('#run').disabled");
+  assert.doesNotMatch(
+    await evaluate("document.querySelector('#scope').textContent"),
+    /000000000002/,
+  );
+  await evaluate(
+    "document.querySelector('#snapshot').value=window.fullSnapshot;document.querySelector('#snapshot').dispatchEvent(new Event('change'))",
+  );
+  await wait("!document.querySelector('#run').disabled");
+  await evaluate(
+    `const transfer=new DataTransfer();transfer.items.add(new File(['{bad json'], 'bad.json',{type:'application/json'}));document.querySelector('#import').files=transfer.files;document.querySelector('#import').dispatchEvent(new Event('change'));`,
+  );
+  await wait(
+    "!document.querySelector('#error').hidden && !document.querySelector('#run').disabled",
+  );
+  assert.ok(await evaluate("document.querySelectorAll('.finding').length>0"));
+  await click('#refresh');
+  await wait("document.querySelector('#error').hidden");
+  await call(
+    'Emulation.setDeviceMetricsOverride',
+    { width: 390, height: 844, deviceScaleFactor: 1, mobile: true },
+    sessionId,
+  );
+  assert.ok(await evaluate('document.documentElement.scrollWidth<=window.innerWidth'));
+  await capture('finops-mobile');
   assert.deepEqual(errors, []);
   console.log(
-    'PASS: seeded dashboard, dimensional filters, exact evidence, saved investigation, unsupported/repeated requests, action update/reload, quality, evidence pagination/search, network error/recovery, empty view, invalid/valid/repeated import, and mobile navigation. No uncaught browser exceptions. Screenshots: docs/screenshots/',
+    'PASS: FinOps empty/import/run/persistence/evidence/error/mobile journeys; seeded dashboard, dimensional filters, exact evidence, saved investigation, unsupported/repeated requests, action update/reload, quality, evidence pagination/search, network error/recovery, empty view, invalid/valid/repeated import, and mobile navigation. No uncaught browser exceptions. Screenshots: docs/screenshots/',
   );
 } finally {
   socket?.close();

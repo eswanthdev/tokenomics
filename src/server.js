@@ -7,9 +7,15 @@ import { randomBytes, createHash } from 'node:crypto';
 import { analyze, ValidationError } from './engine.js';
 import { overview, runInvestigation, evidenceIndex, suggestions } from './workbench.js';
 import { Store, ConflictError } from './store.js';
+import { FinopsRepository, FinopsSupervisor } from './finops-agent.js';
+import { catalog, catalogVersion } from './finops-rules.js';
 const root = new URL('../', import.meta.url);
 const files = {
   '/': ['public/index.html', 'text/html'],
+  '/finops': ['public/finops.html', 'text/html'],
+  '/finops.js': ['public/finops.js', 'text/javascript'],
+  '/finops.css': ['public/finops.css', 'text/css'],
+  '/api/finops/sample': ['fixtures/resources.json', 'application/json'],
   '/app.js': ['public/app.js', 'text/javascript'],
   '/money.js': ['src/money.js', 'text/javascript'],
   '/style.css': ['public/style.css', 'text/css'],
@@ -86,6 +92,8 @@ export function createServer({
   const previewHost = previewOrigin === null ? null : new URL(previewOrigin).host;
   const ownsStore = !store;
   store ||= new Store();
+  const finops = new FinopsRepository(store);
+  const supervisor = new FinopsSupervisor(finops);
   const csrf = randomBytes(32).toString('hex');
   const inFlight = new Set();
   if (seed && !store.datasets().length && !store.audit().length) {
@@ -131,6 +139,39 @@ export function createServer({
         const [file, type] = files[path];
         res.writeHead(200, { 'Content-Type': type });
         res.end(await readFile(new URL(file, root)));
+        return;
+      }
+      if (req.method === 'GET' && path === '/api/finops/state') {
+        send(200, {
+          csrf,
+          catalog,
+          catalog_version: catalogVersion,
+          storage_error: supervisor.storageError,
+          snapshots: finops.listEvidence(),
+          runs: finops.listRuns(),
+        });
+        return;
+      }
+      if (req.method === 'GET' && path === '/api/finops/evidence') {
+        const data = finops.evidence(url.searchParams.get('dataset_id') || '');
+        if (!data) throw new HttpError(404, 'Evidence snapshot not found.');
+        send(200, data);
+        return;
+      }
+      if (req.method === 'POST' && path === '/api/finops/import') {
+        const input = shape(await body(req), ['data']);
+        send(201, { dataset_id: finops.importEvidence(input.data) });
+        return;
+      }
+      if (req.method === 'POST' && path === '/api/finops/run') {
+        const input = shape(await body(req), ['dataset_id', 'request_id']);
+        send(202, supervisor.start(input.dataset_id, input.request_id));
+        return;
+      }
+      if (req.method === 'POST' && path === '/api/finops/cancel') {
+        const input = shape(await body(req), ['run_id']);
+        if (typeof input.run_id !== 'string') throw new ValidationError('run_id must be a string.');
+        send(202, supervisor.cancel(input.run_id));
         return;
       }
       if (req.method === 'GET' && path === '/api/state') {
@@ -321,7 +362,15 @@ export function createServer({
   });
   server.requestTimeout = 15000;
   server.headersTimeout = 10000;
-  if (ownsStore) server.on('close', () => store.close());
+  server.finopsShutdown = async () => {
+    supervisor.active?.controller.abort();
+    await supervisor.completion;
+  };
+  if (ownsStore)
+    server.on('close', async () => {
+      await server.finopsShutdown();
+      store.close();
+    });
   return server;
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -338,7 +387,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   );
   for (const signal of ['SIGINT', 'SIGTERM'])
     process.once(signal, () =>
-      server.close(() => {
+      server.close(async () => {
+        await server.finopsShutdown();
         store.close();
         process.exit(0);
       }),

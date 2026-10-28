@@ -4,6 +4,12 @@ An AWS-first, evidence-backed **AI cost agent for a local single user**. Its sco
 
 The current investigation capability is **offline and deterministic**: supported questions invoke fixed tools, with exact financial calculations and evidence references. It is not a live LLM agent. The optional Bedrock adapter is implemented and contract-tested but **not live-verified**. No AWS or model calls, credential discovery, or cloud changes occur in the shipped mode. Recorded outcomes support analysis; they do not prove that a recommendation caused savings. This is a working preview, not a production-readiness claim.
 
+## FinOps resource assessments
+
+The new **[FinOps agent slice](docs/FINOPS_SLICE.md)** adds versioned EC2 low-CPU, S3 incomplete multipart upload and CloudTrail management-copy overlap checks. Open `/finops` after starting the app, load the synthetic resource example, and inspect the rule results, scope coverage, dispatch trace and exact evidence. These are deterministic specialist workers, not live LLM agents. Gross opportunities are not summed or presented as realizable savings. All resource-changing operations remain excluded.
+
+This is a FinOps agent with an existing AI cost investigation module, not a SaaS platform. Customer-hosted PostgreSQL, Cognito/ECS and private Bedrock are future architecture only. Current storage is local single-user SQLite; no vendor telemetry is added.
+
 ## Run locally
 
 Requires **Node.js 22.13+** (tested locally on Node 22.13.0 and Node 24.19.0) and npm. SQLite is supplied by Node; no database service is needed. Node 22 may print an experimental SQLite warning.
