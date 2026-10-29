@@ -9,12 +9,19 @@ import { overview, runInvestigation, evidenceIndex, suggestions } from './workbe
 import { Store, ConflictError } from './store.js';
 import { FinopsRepository, FinopsSupervisor } from './finops-agent.js';
 import { catalog, catalogVersion } from './finops-rules.js';
+import { AgentExperience } from './agent-experience.js';
 const root = new URL('../', import.meta.url);
 const files = {
-  '/': ['public/index.html', 'text/html'],
-  '/finops': ['public/finops.html', 'text/html'],
+  '/': ['public/agent.html', 'text/html'],
+  '/costs': ['public/index.html', 'text/html'],
+  '/rules': ['public/finops.html', 'text/html'],
+  '/opportunity-money.js': ['src/opportunity-money.js', 'text/javascript'],
+  '/agent.js': ['public/agent.js', 'text/javascript'],
+  '/agent.css': ['public/agent.css', 'text/css'],
+  '/finops': ['public/agent.html', 'text/html'],
   '/finops.js': ['public/finops.js', 'text/javascript'],
   '/finops.css': ['public/finops.css', 'text/css'],
+  '/api/agent/sample': ['fixtures/agent-resources.json', 'application/json'],
   '/api/finops/sample': ['fixtures/resources.json', 'application/json'],
   '/app.js': ['public/app.js', 'text/javascript'],
   '/money.js': ['src/money.js', 'text/javascript'],
@@ -104,6 +111,12 @@ export function createServer({
     store.saveInvestigation(id, runInvestigation(data, scope, suggestions[1]));
     store.addAction(first.id, 0);
   }
+  const experience = new AgentExperience(store, finops, supervisor);
+  const seedReady = seed
+    ? experience.seed(
+        JSON.parse(readFileSync(new URL('fixtures/agent-resources.json', root), 'utf8')),
+      )
+    : Promise.resolve();
   const server = http.createServer(async (req, res) => {
     const send = (status, data) => {
       res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -141,6 +154,30 @@ export function createServer({
         res.end(await readFile(new URL(file, root)));
         return;
       }
+      if (req.method === 'GET' && path === '/api/agent/state') {
+        await seedReady;
+        send(200, { csrf, ...experience.state() });
+        return;
+      }
+      if (req.method === 'POST' && path === '/api/agent/ask') {
+        await seedReady;
+        const input = shape(await body(req), ['dataset_id', 'question', 'request_id']);
+        send(202, experience.ask(input));
+        return;
+      }
+      if (req.method === 'POST' && path === '/api/agent/plans') {
+        await seedReady;
+        const input = shape(await body(req), ['case_id']);
+        if (typeof input.case_id !== 'string')
+          throw new ValidationError('case_id must be a string.');
+        send(201, experience.createPlan(input.case_id));
+        return;
+      }
+      if (req.method === 'PATCH' && path.startsWith('/api/agent/plans/')) {
+        const input = shape(await body(req), ['version', 'status', 'owner', 'note']);
+        send(200, experience.updatePlan(path.split('/').at(-1), input));
+        return;
+      }
       if (req.method === 'GET' && path === '/api/finops/state') {
         send(200, {
           csrf,
@@ -160,7 +197,9 @@ export function createServer({
       }
       if (req.method === 'POST' && path === '/api/finops/import') {
         const input = shape(await body(req), ['data']);
-        send(201, { dataset_id: finops.importEvidence(input.data) });
+        const dataset_id = finops.importEvidence(input.data);
+        experience.activateSnapshot(dataset_id);
+        send(201, { dataset_id });
         return;
       }
       if (req.method === 'POST' && path === '/api/finops/run') {

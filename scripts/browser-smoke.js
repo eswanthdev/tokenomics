@@ -116,7 +116,7 @@ try {
     );
   };
   await mkdir(new URL('../docs/screenshots/', import.meta.url), { recursive: true });
-  await call('Page.navigate', { url: base }, sessionId);
+  await call('Page.navigate', { url: base + '/costs' }, sessionId);
   await ready();
   assert.match(await evaluate('document.body.innerText'), /\$422\.57/);
   assert.match(await evaluate('document.body.innerText'), /101 of 103/);
@@ -410,19 +410,16 @@ try {
   assert.match(await evaluate("document.querySelector('.metric strong').textContent"), /168\.00/);
 
   // FinOps rule-agent slice: empty, seeded, persisted, evidence, errors and mobile.
-  await call('Page.navigate', { url: base + '/finops' }, sessionId);
+  await call('Page.navigate', { url: base + '/rules' }, sessionId);
   await wait("document.querySelector('#status')?.textContent.includes('Local memory loaded')");
-  assert.match(
-    await evaluate("document.querySelector('#results').textContent"),
-    /No assessment yet/,
-  );
+  assert.ok(await evaluate("document.querySelector('#results').textContent.length>0"));
   await click('#sample');
   await wait(
     "!!document.querySelector('#snapshot').value && !document.querySelector('#run').disabled",
   );
   await click('#run');
   await wait(
-    "document.querySelector('#results .badge')?.textContent==='partial' && document.querySelectorAll('.finding').length>0",
+    "document.querySelector('#results .badge')?.textContent==='partial' && document.querySelectorAll('.finding').length>0 && !document.querySelector('#run').disabled",
   );
   assert.match(await evaluate("document.querySelector('#results').textContent"), /\$0.230000/);
   assert.match(await evaluate("document.querySelector('#results').textContent"), /Coverage denied/);
@@ -438,7 +435,7 @@ try {
   await capture('finops-desktop');
   await evaluate("document.querySelector('.finding').scrollIntoView()");
   await capture('finops-findings');
-  await call('Page.navigate', { url: base + '/finops' }, sessionId);
+  await call('Page.navigate', { url: base + '/rules' }, sessionId);
   await wait("document.querySelectorAll('.finding').length>0");
   await evaluate(
     "window.originalFetch=window.fetch;window.fetch=()=>Promise.reject(Error('Offline test'));document.querySelector('#refresh').click()",

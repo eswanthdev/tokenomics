@@ -6,13 +6,15 @@ The current investigation capability is **offline and deterministic**: supported
 
 ## FinOps resource assessments
 
-The new **[FinOps agent slice](docs/FINOPS_SLICE.md)** adds versioned EC2 low-CPU, S3 incomplete multipart upload and CloudTrail management-copy overlap checks. Open `/finops` after starting the app, load the synthetic resource example, and inspect the rule results, scope coverage, dispatch trace and exact evidence. These are deterministic specialist workers, not live LLM agents. Gross opportunities are not summed or presented as realizable savings. All resource-changing operations remain excluded.
+Open `/` (also `/finops`) for the **case-first investigation experience**: a seeded daily brief, searchable opportunity inbox, evidence workspace, guided compound investigations, saved review plans and explicit coverage gaps. EC2 low-CPU, S3 incomplete multipart upload and CloudTrail management-copy checks remain the authoritative deterministic tools. No AWS connection is required. Gross scenarios are shown individually, never summed or presented as verified bill savings.
+
+See [experience scope and verification](docs/AGENT_EXPERIENCE.md) and [design journey](docs/PRODUCT_JOURNEY.md). The original rule diagnostics remain at `/rules`; the AI cost and usage workbench remains at `/costs`. The [rule contracts](docs/FINOPS_SLICE.md) still apply.
 
 This is a FinOps agent with an existing AI cost investigation module, not a SaaS platform. Customer-hosted PostgreSQL, Cognito/ECS and private Bedrock are future architecture only. Current storage is local single-user SQLite; no vendor telemetry is added.
 
 ## Run locally
 
-Requires **Node.js 22.13+** (tested locally on Node 22.13.0 and Node 24.19.0) and npm. SQLite is supplied by Node; no database service is needed. Node 22 may print an experimental SQLite warning.
+Requires **Node.js 22.13+** (this experience tested on Node 24.19.0; earlier workbench checks also ran on 22.13.0) and npm. SQLite is supplied by Node; no database service is needed. Node 22 may print an experimental SQLite warning.
 
 ```sh
 npm ci --ignore-scripts
@@ -28,7 +30,7 @@ npm.cmd ci --ignore-scripts
 npm.cmd start
 ```
 
-On first launch, the app seeds six months of synthetic AWS records, two saved investigations and one proposed review action. Stop with Ctrl+C. Restarting restores the workspace. No API key is needed. The offline app itself can start without npm dependencies; installation provides lint/format gates and the optional SDK adapter.
+On first launch, the FinOps experience seeds a synthetic resource assessment and saved compound investigation. The separate AI cost workspace seeds six months of synthetic AWS records, two saved investigations and one proposed review action. Stop with Ctrl+C. Restarting restores the workspace. No API key is needed. The offline app itself can start without npm dependencies; installation provides lint/format gates and the optional SDK adapter.
 
 `PORT=3001 npm start` changes the port on Unix. In PowerShell, use `$env:PORT = '3001'` before starting. The server binds to `127.0.0.1` only.
 
@@ -51,7 +53,7 @@ The expected proxy preserves the external Host and browser Origin while terminat
 
 Configuration and HTTP requests are covered by automated tests, and the normal browser journeys run locally. A real authenticated Codespaces proxy session has **not** been verified in this environment. See GitHub's [environment variables](https://docs.github.com/en/codespaces/developing-in-a-codespace/default-environment-variables-for-your-codespace) and [port forwarding](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace) documentation.
 
-## Explore the release
+## Explore the AI cost workspace (`/costs`)
 
 1. **Overview:** select comparison periods and account, region, model, workflow or team. Inspect spend trends, rule-based anomaly signals and additive cost drivers.
 2. **Investigations:** open a seeded case or ask a suggested question. Watch the visible tool steps, inspect calculations and click a source-record link. Supported results save automatically with the original scope and dataset version.
@@ -64,7 +66,11 @@ The guided question interface uses four explicit keyword-routed intents: spend v
 
 ## Preview
 
-![Desktop overview](docs/screenshots/desktop-overview.png)
+![Agent daily brief](docs/screenshots/agent-brief-desktop.png)
+
+[Case workspace](docs/screenshots/agent-case-desktop.png) · [Opportunity inbox](docs/screenshots/agent-inbox-desktop.png) · [Mobile brief](docs/screenshots/agent-brief-mobile.png)
+
+Earlier AI cost workspace:
 
 [Investigation](docs/screenshots/desktop-investigation.png) · [Detailed findings](docs/screenshots/desktop-investigation-findings.png) · [Data quality](docs/screenshots/desktop-quality.png) · [Mobile overview](docs/screenshots/mobile-overview.png) · [Mobile investigation](docs/screenshots/mobile-investigation.png)
 

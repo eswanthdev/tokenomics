@@ -24,7 +24,7 @@ test('HTTP import, overview, evidence, investigation, action lifecycle and inval
   const { base, send } = await setup(t);
   const page = await fetch(base);
   assert.equal(page.status, 200);
-  assert.match(await page.text(), /SYNTHETIC DATA/);
+  assert.match(await page.text(), /SYNTHETIC · OFFLINE/);
   assert.match(page.headers.get('content-security-policy'), /frame-ancestors 'none'/);
   const data = await (await fetch(base + '/api/sample')).json();
   const imported = await send('/api/import', { data, name: 'Test AWS data' });

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Tokenomics · FinOps investigations</title>
+    <link rel="stylesheet" href="/agent.css" />
+    <script type="module" src="/agent.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to investigation workspace</a>
+    <aside class="rail">
+      <a class="logo" href="#/brief"
+        ><span class="logo-mark">t</span>tokenomics<span class="logo-dot">.</span></a
+      >
+      <div class="workspace-label">
+        <span class="workspace-icon">N</span>
+        <div>Northstar workspace<small>SYNTHETIC DEMONSTRATION</small></div>
+      </div>
+      <p class="nav-caption">WORKSPACE</p>
+      <nav aria-label="Primary">
+        <a href="#/brief" data-nav="brief"><span>◈</span>Daily brief</a
+        ><a href="#/opportunities" data-nav="opportunities"><span>▤</span>Opportunity inbox</a
+        ><a href="#/investigations" data-nav="investigations"><span>⌕</span>Investigations</a
+        ><a href="#/plans" data-nav="plans"><span>▣</span>Review plans</a
+        ><a href="#/coverage" data-nav="coverage"><span>◫</span>Evidence coverage</a>
+        <a class="mobile-link" href="#/setup" data-nav="setup">Connection readiness</a>
+        <a class="mobile-link" href="/costs">AI cost workspace</a>
+      </nav>
+      <div class="rail-bottom">
+        <a href="#/setup" data-nav="setup">⚙ &nbsp; Connection readiness</a
+        ><a href="/costs">AI cost workspace →</a>
+        <div class="mode">
+          <span></span>Offline deterministic<small>No AWS connection or execution</small>
+        </div>
+      </div>
+    </aside>
+    <div class="shell">
+      <header class="topbar">
+        <div>
+          <span class="crumb">Workspace</span><span class="divider">/</span
+          ><span id="crumb">Daily brief</span>
+        </div>
+        <div class="top-right">
+          <span class="demo-pill">SYNTHETIC · OFFLINE</span
+          ><button id="refresh" class="icon-btn" aria-label="Refresh workspace">↻</button
+          ><span class="avatar" aria-label="Local user">ES</span>
+        </div>
+      </header>
+      <main id="main" tabindex="-1">
+        <div id="error" class="alert" role="alert" hidden></div>
+        <div id="notice" class="status-toast" role="status" aria-live="polite"></div>
+        <div id="view"><div class="loading">Loading your investigation workspace…</div></div>
+      </main>
+      <footer>
+        Evidence-backed decisions. Human review before change.<span
+          >Local agent · No vendor telemetry</span
+        >
+      </footer>
+    </div>
+    <dialog id="evidence-dialog" aria-labelledby="evidence-title">
+      <div class="dialog-top">
+        <div>
+          <p class="eyebrow">IMMUTABLE SOURCE</p>
+          <h2 id="evidence-title">Evidence record</h2>
+        </div>
+        <button id="evidence-close" class="icon-btn" aria-label="Close evidence">×</button>
+      </div>
+      <div id="evidence-content"></div>
+    </dialog>
+  </body>
+</html>
